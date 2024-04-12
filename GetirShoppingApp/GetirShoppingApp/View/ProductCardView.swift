@@ -1,5 +1,4 @@
 import UIKit
-
 class ProductCardView: UIView {
     
     let imageView: UIImageView = {
@@ -16,6 +15,7 @@ class ProductCardView: UIView {
     let nameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "Open Sans", size: 12)
+        label.textAlignment = .center
         label.textColor = UIColor(red: 25/255, green: 25/255, blue: 25/255, alpha: 1) // #191919
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -24,6 +24,7 @@ class ProductCardView: UIView {
     let attributeLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "Open Sans", size: 12)
+        label.textAlignment = .center
         label.textColor = UIColor(red: 105/255, green: 116/255, blue: 136/255, alpha: 1) // #697488
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -31,27 +32,18 @@ class ProductCardView: UIView {
     
     let priceLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "Open Sans", size: 14)
+        label.font = UIFont(name: "Helvetica-Bold", size: 14)
+        label.textAlignment = .center
         label.textColor = UIColor(red: 93/255, green: 62/255, blue: 188/255, alpha: 1) // #5D3EBC
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-    
-    let stepperContainerView: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 1)
-        view.layer.shadowRadius = 3
-        view.layer.shadowOpacity = 0.1
-        view.layer.cornerRadius = 8
-        view.backgroundColor = .white
-        return view
-    }()
+
     let stepperStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.spacing = 4
+        stackView.distribution = .fillEqually
         stackView.layer.shadowColor = UIColor.black.cgColor
         stackView.layer.shadowOffset = CGSize(width: 0, height: 1)
         stackView.layer.shadowRadius = 3
@@ -77,7 +69,6 @@ class ProductCardView: UIView {
         label.text = "0"
         label.textAlignment = .center
         label.backgroundColor = UIColor(red: 93/255, green: 62/255, blue: 188/255, alpha: 1) // #5D3EBC
-        label.layer.cornerRadius = 8
         label.clipsToBounds = true
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -108,7 +99,7 @@ class ProductCardView: UIView {
 
     @objc private func minusButtonTapped() {
            // Adet bilgisini azalt
-           guard var quantity = Int(quantityLabel.text ?? "0"), quantity > 0 else { return }
+           guard var quantity = Int(quantityLabel.text ?? "0"), quantity >= 0 else { return }
            quantity -= 1
            quantityLabel.text = "\(quantity)"
            updateStepperLayout()
@@ -144,9 +135,9 @@ class ProductCardView: UIView {
                attributeLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
                
                stepperStackView.widthAnchor.constraint(equalToConstant: 32),
-               stepperStackView.heightAnchor.constraint(equalToConstant: 96),
+               stepperStackView.heightAnchor.constraint(equalToConstant: 32),
                stepperStackView.topAnchor.constraint(equalTo: topAnchor, constant: -8),
-               stepperStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 8),
+               stepperStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0),
            ])
            
            // İlk başta sadece artı butonunu göster
@@ -158,7 +149,7 @@ class ProductCardView: UIView {
        }
     private func updateStepperLayout() {
           guard let quantity = Int(quantityLabel.text ?? "0") else { return }
-          
+
           if quantity > 0 {
               // Adet 0 değilse artı butonu, adet bilgisi ve eksi butonunu göster
               quantityLabel.isHidden = false
@@ -170,11 +161,33 @@ class ProductCardView: UIView {
               } else {
                   minusButton.setImage(UIImage(named: "delete"), for: .normal)
               }
+              // stackView'in yüksekliğini 96 olarak ayarla
+              NSLayoutConstraint.deactivate([
+                  stepperStackView.heightAnchor.constraint(equalToConstant: 32)
+              ])
+              NSLayoutConstraint.activate([
+                  stepperStackView.heightAnchor.constraint(equalToConstant: 96)
+              ])
+             
           } else {
               quantityLabel.isHidden = true
               minusButton.isHidden = true
+              NSLayoutConstraint.deactivate([
+                         stepperStackView.heightAnchor.constraint(equalToConstant: 96)
+                     ])
+                     NSLayoutConstraint.activate([
+                         stepperStackView.heightAnchor.constraint(equalToConstant: 32)
+                     ])
           }
-        let containerHeight: CGFloat = quantity > 0 ? 96 : 32
-            stepperContainerView.heightAnchor.constraint(equalToConstant: containerHeight).isActive = true
+        
+//        let containerHeight: CGFloat = quantity > 0 ? 96 : 32
+//        // Eski yükseklik kısıtlamasını kaldırın
+//        stepperStackView.constraints.forEach { constraint in
+//                 if constraint.firstAttribute == .height {
+//                     constraint.isActive = false
+//                 }
+//             }
+//        stepperStackView.heightAnchor.constraint(equalToConstant: containerHeight).isActive = true
+        layoutIfNeeded()
       }
 }

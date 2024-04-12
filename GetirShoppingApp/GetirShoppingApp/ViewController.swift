@@ -1,163 +1,137 @@
 import UIKit
-struct Product {
-    let name: String
-    let price: Double
-    let image: UIImage
-    // Diğer gerekli özellikler buraya eklenebilir
-}
-class ViewController: UIViewController {
-    let mockData = [
-           ["Market", "Product Name 1", "Attribute 1", "₺10,00"],
-           ["Market", "Product Name 2", "Attribute 2", "₺20,00"],
-           ["Market", "Product Name 3", "Attribute 3", "₺30,00"],
-           ["Market", "Product Name 4", "Attribute 4", "₺40,00"],
-           ["Market", "Product Name 5", "Attribute 5", "₺50,00"]
-       ]
-    let horizontalCellIdentifier = "ProductCardCellHorizontal"
-     let verticalCellIdentifier = "ProductCardCellVertical"
-     
-     lazy var horizontalCollectionView: UICollectionView = {
-         let layout = UICollectionViewFlowLayout()
-         layout.scrollDirection = .horizontal
-         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-         collectionView.translatesAutoresizingMaskIntoConstraints = false
-         collectionView.backgroundColor = UIColor.white
-         collectionView.delegate = self
-         collectionView.dataSource = self
-         collectionView.showsHorizontalScrollIndicator = false
-         collectionView.register(ProductCardCollectionViewCell.self, forCellWithReuseIdentifier: horizontalCellIdentifier)
-         return collectionView
-     }()
-     
-     lazy var verticalCollectionView: UICollectionView = {
-         let layout = UICollectionViewFlowLayout()
-         layout.scrollDirection = .vertical
-         layout.minimumInteritemSpacing = 16
-         layout.minimumLineSpacing = 16
-         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-         collectionView.translatesAutoresizingMaskIntoConstraints = false
-         collectionView.backgroundColor = UIColor.white
-         collectionView.delegate = self
-         collectionView.dataSource = self
-         collectionView.showsVerticalScrollIndicator = false
-         collectionView.register(ProductCardCollectionViewCell.self, forCellWithReuseIdentifier: verticalCellIdentifier)
-         return collectionView
-     }()
-     
-    private let productCardReuseIdentifier = "ProductCardCell"
 
+class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    
+    // Yatay koleksiyon görünümü
+    let horizontalCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .white
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.contentInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16) // Padding
+        collectionView.showsHorizontalScrollIndicator = false // Yatay kaydırma çubuğunu gizle
+        collectionView.clipsToBounds = false // İçeriği kesme
+        collectionView.contentInsetAdjustmentBehavior = .never // İçerik ayarlamalarını devre dışı bırak
+        collectionView.register(ProductCardCollectionViewCell.self, forCellWithReuseIdentifier: "ProductCardCollectionViewCell")
+        return collectionView
+    }()
+    
+    // Dikey koleksiyon görünümü
+    let verticalCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .white
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        
+        collectionView.contentInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16) // Padding
+        collectionView.showsVerticalScrollIndicator = false // Dikey kaydırma çubuğunu gizle
+
+//        collectionView.contentInsetAdjustmentBehavior = .always // İçerik ayarlamalarını devre dışı bırak
+        collectionView.register(ProductCardCollectionViewCell.self, forCellWithReuseIdentifier: "ProductCardCollectionViewCell")
+        return collectionView
+    }()
+    lazy var verticalCollectionView1: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        layout.minimumInteritemSpacing = 16
+        layout.minimumLineSpacing = 16
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.backgroundColor = UIColor.white
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.register(ProductCardCollectionViewCell.self, forCellWithReuseIdentifier: "ProductCardCollectionViewCell")
+        return collectionView
+    }()
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Örnek kullanım
+        title = "Ürünler"
         let cardButton = CardButton()
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: cardButton)
-        // Navigation Bar'ın sağ öğesi olarak eklemek için aşağıdaki kodu kullanabilirsiniz
-        // navigationItem.rightBarButtonItem = UIBarButtonItem(customView: cardButton)
-
-//        navigationController?.navigationBar.backgroundColor = UIColor(red: 93/255, green: 62/255, blue: 188/255, alpha: 1.0)
-//        navigationController?.navigationBar.isTranslucent = false // Transparanlık özelliğini kapattık
-
-        title = "Ürünler"
-        // Navigation bar'ın sağ tarafına bir düğme oluşturma
+//        cardButton.isHidden = true
         view.backgroundColor = UIColor(red: 245/255, green: 245/255, blue: 245/255, alpha: 1)
-        setupViews()
-        
-        // Register cell classes
-        horizontalCollectionView.register(ProductCardCollectionViewCell.self, forCellWithReuseIdentifier: productCardReuseIdentifier)
-        verticalCollectionView.register(ProductCardCollectionViewCell.self, forCellWithReuseIdentifier: productCardReuseIdentifier)
-        
-        // Set delegates
-        horizontalCollectionView.dataSource = self
-        horizontalCollectionView.delegate = self
-        verticalCollectionView.dataSource = self
-        verticalCollectionView.delegate = self
-      }
-    private func setupViews() {
+        // Yatay koleksiyon görünümünü ekle
         view.addSubview(horizontalCollectionView)
-              view.addSubview(verticalCollectionView)
-              
-              NSLayoutConstraint.activate([
-                  horizontalCollectionView.topAnchor.constraint(equalTo: view.topAnchor, constant: 104),
-                  horizontalCollectionView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: -1),
-                  horizontalCollectionView.rightAnchor.constraint(equalTo: view.rightAnchor),
-                  horizontalCollectionView.heightAnchor.constraint(equalToConstant: 185),
-                  
-                  verticalCollectionView.topAnchor.constraint(equalTo: view.topAnchor, constant: 305),
-                  verticalCollectionView.widthAnchor.constraint(equalToConstant: 375),
-                  verticalCollectionView.leftAnchor.constraint(equalTo: view.leftAnchor),
-                  verticalCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-              ])
-    }
-    
-      // MARK: - UICollectionViewDataSource methods
-     
-  }
-extension ViewController :  UICollectionViewDataSource, UICollectionViewDelegateFlowLayout{
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 1
+        horizontalCollectionView.delegate = self
+        horizontalCollectionView.dataSource = self
+        
+        NSLayoutConstraint.activate([
+            horizontalCollectionView.topAnchor.constraint(equalTo: view.topAnchor, constant: 120),
+            horizontalCollectionView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: -1),
+            horizontalCollectionView.rightAnchor.constraint(equalTo: view.rightAnchor),
+            horizontalCollectionView.heightAnchor.constraint(equalToConstant: 220)
+        ])
+        
+        // Dikey koleksiyon görünümünü ekle
+        view.addSubview(verticalCollectionView)
+
+        verticalCollectionView.delegate = self
+        verticalCollectionView.dataSource = self
+        
+        NSLayoutConstraint.activate([
+            verticalCollectionView.widthAnchor.constraint(equalToConstant: 375),
+            verticalCollectionView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            verticalCollectionView.topAnchor.constraint(equalTo: horizontalCollectionView.bottomAnchor, constant: 16) ,// Yatay koleksiyonun altına yerleştir
+            verticalCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+
+        ])
+
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        // Assuming some dummy data for demonstration
-        return mockData.count // Change as needed
+        // Burada koleksiyon görünümündeki öğe sayısını döndür
+        return 10 // Örnek olarak 10 öğe olsun
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if collectionView == horizontalCollectionView {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: horizontalCellIdentifier, for: indexPath) as! ProductCardCollectionViewCell
-            cell.configure(with: mockData[indexPath.item])
-            return cell
-        } else {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: verticalCellIdentifier, for: indexPath) as! ProductCardCollectionViewCell
-            cell.configure(with: mockData[indexPath.item])
-            return cell
-        }
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductCardCollectionViewCell", for: indexPath) as! ProductCardCollectionViewCell
+        // Hücreyi özelleştirme işlemlerini burada yapabilirsiniz
+        cell.configure()
+        return cell
     }
-    
-    // MARK: UICollectionViewDelegateFlowLayout
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        // Her hücrenin boyutunu burada ayarlayabilirsiniz
         if collectionView == horizontalCollectionView {
-                return CGSize(width: 120, height: 185)
-            } else {
-                let width = (375 - 16 * 4) / 3 // 16*4: padding ve aralıklar
-                return CGSize(width: width, height: 185)
-            }
-        
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 16
+            return CGSize(width: 92, height: 190)
+        } else {
+            let collectionViewWidth = collectionView.frame.width - 32 // Sol ve sağ kenar boşlukları çıkarılarak koleksiyon genişliği hesaplanır
+            let cellWidth = (collectionViewWidth - 16 * 2) / 3 // Her satırda üç hücre olacak şekilde hücre genişliği hesaplanır
+            return CGSize(width: cellWidth, height: 190)
+        }
     }
 }
+
 class ProductCardCollectionViewCell: UICollectionViewCell {
     let productCardView = ProductCardView()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        setupUI()
+        setupViews()
     }
     
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-        setupUI()
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
-    private func setupUI() {
-        contentView.addSubview(productCardView)
-        productCardView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            productCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
-            productCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
-            productCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
-            productCardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: 0)
-        ])
-    }
-    
-    func configure(with data: [String]) {
-        productCardView.priceLabel.text = "23.59TL"
+    func configure() {
+        productCardView.priceLabel.text = "₺0,00"
         productCardView.attributeLabel.text = "Yemek"
         productCardView.nameLabel.text = " Atistirmalik"
         productCardView.imageView.image = UIImage(named: "card-image")
+    }
+    
+    private func setupViews() {
+        addSubview(productCardView)
+        productCardView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            productCardView.topAnchor.constraint(equalTo: topAnchor),
+            productCardView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            productCardView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            productCardView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
     }
 }
